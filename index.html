@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pyramid Game CTRL-S (Local)</title>
+<style>
+body{margin:0;font-family:Segoe UI,sans-serif;background:#020617;color:#e5e7eb;display:flex;justify-content:center;align-items:center;min-height:100vh;}
+.card{width:400px;background:#020617;border-radius:18px;padding:22px;box-shadow:0 20px 45px rgba(0,0,0,.6);}
+h1,h2{text-align:center;margin:8px 0;}
+p{text-align:center;color:#94a3b8;font-size:14px;}
+button{width:100%;padding:10px;margin-top:10px;border:none;border-radius:12px;background:#2563eb;color:white;font-size:15px;cursor:pointer;}
+button:disabled{background:#334155;cursor:not-allowed}
+input{width:100%;padding:10px;margin:8px 0;border-radius:10px;border:none;background:#0f172a;color:white;}
+.player{display:flex;justify-content:space-between;align-items:center;padding:8px;border:1px solid #334155;border-radius:10px;margin:6px 0;}
+.pyramid{margin:12px auto;width:0;height:0;border-left:120px solid transparent;border-right:120px solid transparent;border-bottom:200px solid #2563eb;opacity:.18;}
+</style>
+</head>
+<body>
+
+<div class="card" id="welcome">
+  <h1>🔺 PYRAMID GAME CTRL-S</h1>
+  <div class="pyramid"></div>
+  <p>10 Players Only • 3 Votes Required</p>
+  <button id="enterBtn">ENTER</button>
+</div>
+
+<div class="card" id="login" style="display:none">
+  <h2>Login</h2>
+  <input id="username" placeholder="Enter your name">
+  <button id="joinBtn">JOIN GAME</button>
+</div>
+
+<div class="card" id="vote" style="display:none">
+  <h2>Vote (Pick EXACTLY 3)</h2>
+  <div id="players"></div>
+  <button id="submit" disabled>SUBMIT VOTES</button>
+</div>
+
+<div class="card" id="result" style="display:none">
+  <h2>Live Results</h2>
+  <div id="results"></div>
+  <p>Voting complete!</p>
+</div>
+
+<div class="card" id="admin" style="display:none">
+  <h2>ADMIN PANEL</h2>
+  <button id="resetBtn">RESET GAME</button>
+</div>
+
+<script>
+const MAX_PLAYERS=10;
+const ADMIN_PASSWORD="Sumarid_Game";
+let playersList=[];
+let votesCount={};
+let currentPlayer=null;
+
+const welcome=document.getElementById('welcome');
+const login=document.getElementById('login');
+const vote=document.getElementById('vote');
+const result=document.getElementById('result');
+const admin=document.getElementById('admin');
+
+const enterBtn=document.getElementById('enterBtn');
+const joinBtn=document.getElementById('joinBtn');
+const submitBtn=document.getElementById('submit');
+const resetBtn=document.getElementById('resetBtn');
+
+const username=document.getElementById('username');
+
+function show(id){
+  welcome.style.display='none'; login.style.display='none';
+  vote.style.display='none'; result.style.display='none';
+  admin.style.display='none';
+  if(id==='welcome') welcome.style.display='block';
+  if(id==='login') login.style.display='block';
+  if(id==='vote') vote.style.display='block';
+  if(id==='result') result.style.display='block';
+  if(id==='admin') admin.style.display='block';
+}
+
+enterBtn.onclick=()=>show('login');
+
+joinBtn.onclick=()=>{
+  const name=username.value.trim();
+  if(!name){ alert('Enter name'); return; }
+  if(name===ADMIN_PASSWORD){ show('admin'); return; }
+  if(playersList.includes(name)){ alert('Name already joined'); return; }
+  if(playersList.length>=MAX_PLAYERS){ alert('Player limit reached'); return; }
+  playersList.push(name);
+  currentPlayer=name;
+  showVote();
+};
+
+function showVote(){
+  show('vote');
+  const div=document.getElementById('players');
+  div.innerHTML='';
+  playersList.forEach(p=>{
+    div.innerHTML+=`<div class="player"><span>${p}</span><input type="checkbox" onchange="checkVotes()" value="${p}"></div>`;
+    if(!votesCount[p]) votesCount[p]=0;
+  });
+}
+
+function checkVotes(){
+  const checked=document.querySelectorAll('#players input:checked').length;
+  submitBtn.disabled = checked!==3;
+}
+
+submitBtn.onclick=()=>{
+  const picks=[...document.querySelectorAll('#players input:checked')].map(c=>c.value);
+  picks.forEach(p=>votesCount[p]=(votesCount[p]||0)+1);
+  showResults();
+};
+
+function showResults(){
+  show('result');
+  const res=document.getElementById('results');
+  res.innerHTML='';
+  Object.entries(votesCount).sort((a,b)=>b[1]-a[1]).forEach(([n,v])=>{
+    res.innerHTML+=`<p>${n}: <b>${v}</b></p>`;
+  });
+}
+
+resetBtn.onclick=()=>{
+  if(!confirm('Reset game?')) return;
+  playersList=[]; votesCount={}; currentPlayer=null;
+  show('welcome');
+};
+</script>
+
+</body>
+</html>
